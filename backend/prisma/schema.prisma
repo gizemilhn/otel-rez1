@@ -1,0 +1,90 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  USER
+}
+
+enum RoomStatus {
+  AVAILABLE
+  OCCUPIED
+  MAINTENANCE
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+model User {
+  id            String        @id @default(uuid())
+  email         String        @unique
+  password      String
+  firstName     String
+  lastName      String
+  role          UserRole      @default(USER)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  reservations  Reservation[]
+  managedHotel  Hotel?       @relation("HotelManager")
+}
+
+model Hotel {
+  id          String        @id @default(uuid())
+  name        String
+  address     String
+  city        String
+  country     String
+  description String?
+  imageUrl    String?
+  rating      Float?
+  managerId   String?       @unique
+  manager     User?         @relation("HotelManager", fields: [managerId], references: [id])
+  rooms       Room[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model Room {
+  id            String        @id @default(uuid())
+  number        String
+  type          String
+  price         Float
+  capacity      Int
+  description   String?
+  status        RoomStatus    @default(AVAILABLE)
+  hotelId       String
+  hotel         Hotel         @relation(fields: [hotelId], references: [id])
+  reservations  Reservation[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Reservation {
+  id            String            @id @default(uuid())
+  userId        String
+  user          User              @relation(fields: [userId], references: [id])
+  roomId        String
+  room          Room              @relation(fields: [roomId], references: [id])
+  checkIn       DateTime
+  checkOut      DateTime
+  status        ReservationStatus @default(PENDING)
+  totalPrice    Float
+  guestCount    Int
+  specialRequests String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+} 
