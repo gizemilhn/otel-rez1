@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { authService } from '../services/api';
 
 // Types
 export type UserRole = 'admin' | 'yonetici' | 'musteri';
@@ -11,7 +12,7 @@ interface User {
   email: string;
   telefon: string;
   rol: UserRole;
-  otelId?: number; // For hotel managers
+  otelId?: number;
 }
 
 interface AuthContextType {
@@ -32,69 +33,58 @@ interface RegisterData {
   password: string;
 }
 
-// Create context with default values
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Provider component
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Check for stored user on mount
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
+    const checkAuth = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const userData = await authService.getMe();
+          setUser({
+            id: userData.id,
+            ad: userData.ad,
+            soyad: userData.soyad,
+            email: userData.email,
+            telefon: userData.telefon,
+            rol: userData.rol,
+            otelId: userData.otelId
+          });
+        } catch (error) {
+          localStorage.removeItem('token');
+          setUser(null);
+        }
+      }
+      setLoading(false);
+    };
+    checkAuth();
   }, []);
 
-  // Login function with role-based redirection
   const login = async (email: string, password: string) => {
     setLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // For demo purposes, accept specific credentials
-      let user: User;
+      const { token } = await authService.login(email, password);
+      localStorage.setItem('token', token);
       
-      if (email === 'admin@example.com' && password === 'admin123') {
-        user = {
-          id: 1,
-          ad: 'Admin',
-          soyad: 'User',
-          email,
-          telefon: '5551234567',
-          rol: 'admin'
-        };
-      } else if (email === 'yonetici@example.com' && password === 'yonetici123') {
-        user = {
-          id: 2,
-          ad: 'Yönetici',
-          soyad: 'User',
-          email,
-          telefon: '5551234568',
-          rol: 'yonetici',
-          otelId: 1 // Demo hotel ID
-        };
-      } else {
-        user = {
-          id: 3,
-          ad: 'Demo',
-          soyad: 'Kullanıcı',
-          email,
-          telefon: '5551234569',
-          rol: 'musteri'
-        };
-      }
+      const userData = await authService.getMe();
+      const authenticatedUser = {
+        id: userData.id,
+        ad: userData.ad,
+        soyad: userData.soyad,
+        email: userData.email,
+        telefon: userData.telefon,
+        rol: userData.rol,
+        otelId: userData.otelId
+      };
+      
+      setUser(authenticatedUser);
 
-      setUser(user);
-      localStorage.setItem('user', JSON.stringify(user));
-
-      // Role-based redirection
-      switch (user.rol) {
+      switch (authenticatedUser.rol) {
         case 'admin':
           navigate('/admin');
           break;
@@ -111,25 +101,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Register function
   const register = async (userData: RegisterData) => {
     setLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Create new user with default role
-      const newUser: User = {
-        id: Math.floor(Math.random() * 1000),
-        ad: userData.ad,
-        soyad: userData.soyad,
-        email: userData.email,
-        telefon: userData.telefon,
-        rol: 'musteri'
-      };
-
-      setUser(newUser);
-      localStorage.setItem('user', JSON.stringify(newUser));
+      console.log('sdfhdhdfhd')
+      await authService.register(userData);
       navigate('/giris');
     } catch (error) {
       throw new Error('Kayıt başarısız');
@@ -138,10 +114,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Logout function
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('user');
+    localStorage.removeItem('token');
     navigate('/');
   };
 
@@ -162,11 +137,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Custom hook for using auth context
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-} 
+}

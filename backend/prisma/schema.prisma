@@ -35,6 +35,9 @@ model User {
   password      String
   firstName     String
   lastName      String
+  tcNumber      String?       @unique // Turkish ID number
+  birthDate     DateTime?     // Birth date for users
+  phone         String?
   role          UserRole      @default(USER)
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
@@ -56,6 +59,9 @@ model Hotel {
   rooms       Room[]
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
+
+  @@index([city])
+  @@index([managerId])
 }
 
 model Room {
@@ -71,20 +77,57 @@ model Room {
   reservations  Reservation[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+
+  @@index([hotelId])
+  @@index([status])
 }
 
 model Reservation {
-  id            String            @id @default(uuid())
-  userId        String
-  user          User              @relation(fields: [userId], references: [id])
-  roomId        String
-  room          Room              @relation(fields: [roomId], references: [id])
-  checkIn       DateTime
-  checkOut      DateTime
-  status        ReservationStatus @default(PENDING)
-  totalPrice    Float
-  guestCount    Int
+  id              String            @id @default(uuid())
+  userId          String
+  user            User              @relation(fields: [userId], references: [id])
+  roomId          String
+  room            Room              @relation(fields: [roomId], references: [id])
+  checkIn         DateTime
+  checkOut        DateTime
+  status          ReservationStatus @default(PENDING)
+  totalPrice      Float
+  guestCount      Int
   specialRequests String?
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([userId])
+  @@index([roomId])
+  @@index([status])
+  @@index([checkIn, checkOut])
+}
+
+// Database view for hotel summary
+model HotelSummary {
+  id          String
+  name        String
+  city        String
+  country     String
+  rating      Float?
+  managerName String?
+  roomCount   Int
+  totalRooms  Int
+  availableRooms Int
+
+  @@id([id])
+}
+
+// Trigger function for logging reservation changes
+model ReservationLog {
+  id            String    @id @default(uuid())
+  reservationId String
+  action        String    // INSERT, UPDATE, DELETE
+  oldStatus     String?
+  newStatus     String?
+  timestamp     DateTime  @default(now())
+  userId        String    // User who performed the action
+
+  @@index([reservationId])
+  @@index([timestamp])
 } 
