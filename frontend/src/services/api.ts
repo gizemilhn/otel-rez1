@@ -162,6 +162,8 @@ export const hotelService = {
   delete: (id: string) => api.delete(`/admin/hotels/${id}`).then(res => res.data),
   assignManager: (hotelId: string, managerId: string) => 
     api.post(`/admin/hotels/${hotelId}/manager`, { managerId }).then(res => res.data),
+  getMyHotel: () => api.get('/manager/hotel').then(res => res.data),
+  updateMyHotel: (data: any) => api.put('/manager/hotel', data).then(res => res.data),
 };
 
 export const userService = {
@@ -173,16 +175,24 @@ export const userService = {
 
 export const roomService = {
   getAll: () => api.get('/admin/rooms').then(res => res.data),
+  getById: (id: string) => api.get(`/admin/rooms/${id}`).then(res => res.data),
   create: (data: any) => api.post('/admin/rooms', data).then(res => res.data),
   update: (id: string, data: any) => api.put(`/admin/rooms/${id}`, data).then(res => res.data),
   delete: (id: string) => api.delete(`/admin/rooms/${id}`).then(res => res.data),
+  getMyHotelRooms: () => api.get('/manager/rooms').then(res => res.data),
+  createMyHotelRoom: (data: any) => api.post('/manager/rooms', data).then(res => res.data),
+  updateMyHotelRoom: (id: string, data: any) => api.put(`/manager/rooms/${id}`, data).then(res => res.data),
+  deleteMyHotelRoom: (id: string) => api.delete(`/manager/rooms/${id}`).then(res => res.data),
 };
 
 export const reservationService = {
   getAll: () => api.get('/admin/reservations').then(res => res.data),
   update: (id: string, data: any) => api.put(`/admin/reservations/${id}`, data).then(res => res.data),
   delete: (id: string) => api.delete(`/admin/reservations/${id}`).then(res => res.data),
-  cancel: (id: string) => api.post(`/admin/reservations/${id}/cancel`).then(res => res.data),
+  cancel: (id: string) => api.put(`/admin/reservations/${id}/status`, { status: 'CANCELLED' }).then(res => res.data),
+  getMyHotelReservations: () => api.get('/manager/reservations').then(res => res.data),
+  updateStatus: (reservationId: string, status: string) => 
+    api.put(`/manager/reservations/${reservationId}/status`, { status }).then(res => res.data),
 };
 
 export default api; 

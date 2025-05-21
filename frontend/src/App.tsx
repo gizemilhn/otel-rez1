@@ -7,21 +7,21 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AnaSayfa from './pages/AnaSayfa';
 import Kayit from './pages/Kayit';
 import Giris from './pages/Giris';
-import Profil from './pages/Profil';
 import Oteller from './pages/Oteller';
 import OtelDetay from './pages/OtelDetay';
 import Hakkimizda from './pages/Hakkimizda';
 import Iletisim from './pages/Iletisim';
 import GizlilikPolitikasi from './pages/GizlilikPolitikasi';
 import Dashboard from './pages/admin/Dashboard';
-import YoneticiDashboard from './pages/yonetici/Dashboard';
 import Users from './pages/admin/Users';
 import Rooms from './pages/admin/Rooms';
 import Hotels from './pages/admin/Hotels';
 import AdminReservations from './pages/admin/AdminReservations';
-import YoneticiOdalar from './pages/yonetici/Odalar';
-import YoneticiRezervasyonlar from './pages/yonetici/Rezervasyonlar';
 import YoneticiAyarlar from './pages/yonetici/Ayarlar';
+import Otel from './pages/yonetici/Otel';
+import Odalar from './pages/yonetici/Odalar';
+import Rezervasyonlar from './pages/yonetici/Rezervasyonlar';
+import YoneticiDashboard from './pages/yonetici/Dashboard';
 
 export default function App() {
   return (
@@ -36,14 +36,6 @@ export default function App() {
         <Route path="hakkimizda" element={<Hakkimizda />} />
         <Route path="iletisim" element={<Iletisim />} />
         <Route path="gizlilik-politikasi" element={<GizlilikPolitikasi />} />
-        <Route
-          path="profil"
-          element={
-            <ProtectedRoute>
-              <Profil />
-            </ProtectedRoute>
-          }
-        />
       </Route>
 
       {/* Admin Routes */}
@@ -72,8 +64,9 @@ export default function App() {
         }
       >
         <Route index element={<YoneticiDashboard />} />
-        <Route path="odalar" element={<YoneticiOdalar />} />
-        <Route path="rezervasyonlar" element={<YoneticiRezervasyonlar />} />
+        <Route path="otel" element={<Otel />} />
+        <Route path="odalar" element={<Odalar />} />
+        <Route path="rezervasyonlar" element={<Rezervasyonlar />} />
         <Route path="ayarlar" element={<YoneticiAyarlar />} />
       </Route>
     </Routes>
