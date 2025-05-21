@@ -33,7 +33,7 @@ export const authService = {
     return response.data;
   },
   getMe: async () => {
-    const response = await api.get('/auth/me');
+    const response = await api.get('/auth/profile');
     return response.data;
   },
 };
@@ -153,6 +153,36 @@ export const otelService = {
     const response = await api.delete(`/oteller/${id}`);
     return response.data;
   },
+};
+
+export const hotelService = {
+  getAll: () => api.get('/admin/hotels').then(res => res.data),
+  create: (data: any) => api.post('/admin/hotels', data).then(res => res.data),
+  update: (id: string, data: any) => api.put(`/admin/hotels/${id}`, data).then(res => res.data),
+  delete: (id: string) => api.delete(`/admin/hotels/${id}`).then(res => res.data),
+  assignManager: (hotelId: string, managerId: string) => 
+    api.post(`/admin/hotels/${hotelId}/manager`, { managerId }).then(res => res.data),
+};
+
+export const userService = {
+  getAll: () => api.get('/admin/users').then(res => res.data),
+  create: (data: any) => api.post('/admin/users', data).then(res => res.data),
+  update: (id: string, data: any) => api.put(`/admin/users/${id}`, data).then(res => res.data),
+  delete: (id: string) => api.delete(`/admin/users/${id}`).then(res => res.data),
+};
+
+export const roomService = {
+  getAll: () => api.get('/admin/rooms').then(res => res.data),
+  create: (data: any) => api.post('/admin/rooms', data).then(res => res.data),
+  update: (id: string, data: any) => api.put(`/admin/rooms/${id}`, data).then(res => res.data),
+  delete: (id: string) => api.delete(`/admin/rooms/${id}`).then(res => res.data),
+};
+
+export const reservationService = {
+  getAll: () => api.get('/admin/reservations').then(res => res.data),
+  update: (id: string, data: any) => api.put(`/admin/reservations/${id}`, data).then(res => res.data),
+  delete: (id: string) => api.delete(`/admin/reservations/${id}`).then(res => res.data),
+  cancel: (id: string) => api.post(`/admin/reservations/${id}/cancel`).then(res => res.data),
 };
 
 export default api; 

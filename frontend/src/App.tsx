@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
-import AdminLayout from './components/AdminLayout';
+import AdminLayout from './components/admin/AdminLayout';
 import YoneticiLayout from './components/YoneticiLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import AnaSayfa from './pages/AnaSayfa';
@@ -15,29 +15,13 @@ import Iletisim from './pages/Iletisim';
 import GizlilikPolitikasi from './pages/GizlilikPolitikasi';
 import Dashboard from './pages/admin/Dashboard';
 import YoneticiDashboard from './pages/yonetici/Dashboard';
-import AdminUsers from './pages/admin/AdminUsers';
-import AdminRooms from './pages/admin/AdminRooms';
+import Users from './pages/admin/Users';
+import Rooms from './pages/admin/Rooms';
+import Hotels from './pages/admin/Hotels';
+import AdminReservations from './pages/admin/AdminReservations';
 import YoneticiOdalar from './pages/yonetici/Odalar';
 import YoneticiRezervasyonlar from './pages/yonetici/Rezervasyonlar';
 import YoneticiAyarlar from './pages/yonetici/Ayarlar';
-
-const AdminReservations: React.FC = () => {
-  return (
-    <div>
-      <h2>Admin Reservations</h2>
-      {/* Reservation management content goes here */}
-    </div>
-  );
-};
-
-const AdminHotels: React.FC = () => {
-  return (
-    <div>
-      <h2>Admin Hotels</h2>
-      {/* Hotel management content goes here */}
-    </div>
-  );
-};
 
 export default function App() {
   return (
@@ -72,18 +56,17 @@ export default function App() {
         }
       >
         <Route index element={<Dashboard />} />
-        <Route path="kullanicilar" element={<AdminUsers />} />
-        <Route path="oteller" element={<AdminHotels />} />
-        <Route path="odalar" element={<AdminRooms />} />
+        <Route path="kullanicilar" element={<Users />} />
+        <Route path="oteller" element={<Hotels />} />
+        <Route path="odalar" element={<Rooms />} />
         <Route path="rezervasyonlar" element={<AdminReservations />} />
-        {/* Add more admin routes here */}
       </Route>
 
       {/* Hotel Manager Routes */}
       <Route
         path="/yonetici"
         element={
-          <ProtectedRoute requireYonetici>
+          <ProtectedRoute requireManager>
             <YoneticiLayout />
           </ProtectedRoute>
         }

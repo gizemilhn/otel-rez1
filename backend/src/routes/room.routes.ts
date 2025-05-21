@@ -5,46 +5,24 @@ import {
   getRoomById,
   updateRoom,
   deleteRoom,
-  checkRoomAvailability,
 } from '../controllers/room.controller';
-import { authenticateToken, authorizeRoles } from '../middlewares/auth.middleware';
+import { authenticateToken, authorizeRoles, authorizeHotelManager } from '../middlewares/auth.middleware';
 import { UserRole } from '@prisma/client';
-import { validateRequest } from '../middlewares/validate.middleware';
-import { roomSchema, checkAvailabilitySchema } from '../schemas/room.schema';
 
 const router = Router();
 
 // Public routes
-router.get('/hotel/:hotelId', getRooms);
+router.get('/', getRooms);
 router.get('/:id', getRoomById);
-router.get(
-  '/:roomId/availability',
-  validateRequest(checkAvailabilitySchema),
-  checkRoomAvailability
-);
 
 // Protected routes
 router.use(authenticateToken);
 
+// Admin only routes
+router.post('/', authorizeRoles(UserRole.ADMIN), createRoom);
+router.delete('/:id', authorizeRoles(UserRole.ADMIN), deleteRoom);
+
 // Admin and manager routes
-router.post(
-  '/',
-  authorizeRoles(UserRole.ADMIN, UserRole.MANAGER),
-  validateRequest(roomSchema),
-  createRoom
-);
-
-router.put(
-  '/:id',
-  authorizeRoles(UserRole.ADMIN, UserRole.MANAGER),
-  validateRequest(roomSchema),
-  updateRoom
-);
-
-router.delete(
-  '/:id',
-  authorizeRoles(UserRole.ADMIN, UserRole.MANAGER),
-  deleteRoom
-);
+router.put('/:id', authorizeHotelManager, updateRoom);
 
 export default router; 

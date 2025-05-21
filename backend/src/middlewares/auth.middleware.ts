@@ -1,7 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { UserRole } from '@prisma/client';
 import { prisma } from '../lib/prisma';
+
+const UserRole = {
+  ADMIN: 'ADMIN',
+  MANAGER: 'MANAGER',
+  USER: 'USER'
+} as const;
+
+type UserRole = typeof UserRole[keyof typeof UserRole];
 
 interface JwtPayload {
   userId: string;
@@ -57,8 +64,12 @@ export const authorizeHotelManager = async (
   next: NextFunction
 ) => {
   try {
-    if (!req.user || req.user.role !== UserRole.MANAGER) {
-      return res.status(403).json({ message: 'Only hotel managers can access this resource' });
+    if (!req.user) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+
+    if (req.user.role === UserRole.ADMIN) {
+      return next();
     }
 
     const hotelId = req.params.hotelId;
@@ -66,12 +77,16 @@ export const authorizeHotelManager = async (
       where: { id: hotelId },
     });
 
-    if (!hotel || hotel.managerId !== req.user.userId) {
-      return res.status(403).json({ message: 'You can only manage your assigned hotel' });
+    if (!hotel) {
+      return res.status(404).json({ message: 'Hotel not found' });
+    }
+
+    if (hotel.managerId !== req.user.userId) {
+      return res.status(403).json({ message: 'Not authorized to manage this hotel' });
     }
 
     next();
   } catch (error) {
-    return res.status(500).json({ message: 'Error verifying hotel manager access' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 }; 

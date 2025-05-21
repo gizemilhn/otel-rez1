@@ -3,44 +3,25 @@ import {
   createReservation,
   getReservations,
   getReservationById,
-  updateReservationStatus,
-  cancelReservation,
+  updateReservation,
+  deleteReservation,
 } from '../controllers/reservation.controller';
 import { authenticateToken, authorizeRoles } from '../middlewares/auth.middleware';
 import { UserRole } from '@prisma/client';
-import { validateRequest } from '../middlewares/validate.middleware';
-import { reservationSchema, updateReservationStatusSchema } from '../schemas/reservation.schema';
 
 const router = Router();
 
 // All routes require authentication
 router.use(authenticateToken);
 
-// Create reservation (any authenticated user)
-router.post(
-  '/',
-  validateRequest(reservationSchema),
-  createReservation
-);
-
-// Get all reservations (filtered by role)
-router.get('/', getReservations);
-
-// Get reservation by ID (filtered by role)
+// User routes
+router.post('/', createReservation);
+router.get('/my-reservations', getReservations);
 router.get('/:id', getReservationById);
+router.put('/:id', updateReservation);
+router.delete('/:id', deleteReservation);
 
-// Update reservation status (admin and manager only)
-router.patch(
-  '/:id/status',
-  authorizeRoles(UserRole.ADMIN, UserRole.MANAGER),
-  validateRequest(updateReservationStatusSchema),
-  updateReservationStatus
-);
-
-// Cancel reservation (admin, manager, or reservation owner)
-router.post(
-  '/:id/cancel',
-  cancelReservation
-);
+// Admin routes
+router.get('/admin/all', authorizeRoles(UserRole.ADMIN), getReservations);
 
 export default router; 

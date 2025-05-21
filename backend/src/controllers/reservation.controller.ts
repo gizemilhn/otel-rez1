@@ -1,393 +1,324 @@
 import { Request, Response } from 'express';
-import { PrismaClient, ReservationStatus, UserRole } from '@prisma/client';
-import { BadRequestError, NotFoundError, UnauthorizedError } from '../utils/errors';
-
-const prisma = new PrismaClient();
+import { prisma } from '../lib/prisma';
+import { UserRole, ReservationStatus } from '@prisma/client';
+import { sendReservationConfirmation, sendReservationCancellation } from '../services/email.service';
 
 export const createReservation = async (req: Request, res: Response) => {
-  const { roomId, checkIn, checkOut, guestCount, specialRequests } = req.body;
-  const userId = req.user?.id;
+  try {
+    const { roomId, checkIn, checkOut, guestCount, specialRequests } = req.body;
+    const userId = req.user?.userId;
 
-  if (!userId) {
-    throw new UnauthorizedError('User not authenticated');
-  }
+    if (!userId) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
 
-  // Check if room exists and is available
-  const room = await prisma.room.findUnique({
-    where: { id: roomId },
-    include: { hotel: true },
-  });
-
-  if (!room) {
-    throw new NotFoundError('Room not found');
-  }
-
-  if (room.status !== 'AVAILABLE') {
-    throw new BadRequestError('Room is not available');
-  }
-
-  // Check if room has enough capacity
-  if (guestCount > room.capacity) {
-    throw new BadRequestError('Room capacity exceeded');
-  }
-
-  // Check for overlapping reservations
-  const overlappingReservation = await prisma.reservation.findFirst({
-    where: {
-      roomId,
-      status: {
-        in: ['PENDING', 'CONFIRMED'],
+    // Check if room exists and is available
+    const room = await prisma.room.findUnique({
+      where: { id: roomId },
+      include: {
+        hotel: true,
       },
-      OR: [
-        {
-          AND: [
-            { checkIn: { lte: new Date(checkIn) } },
-            { checkOut: { gt: new Date(checkIn) } },
-          ],
-        },
-        {
-          AND: [
-            { checkIn: { lt: new Date(checkOut) } },
-            { checkOut: { gte: new Date(checkOut) } },
-          ],
-        },
-      ],
-    },
-  });
+    });
 
-  if (overlappingReservation) {
-    throw new BadRequestError('Room is not available for the selected dates');
-  }
+    if (!room) {
+      return res.status(404).json({ message: 'Room not found' });
+    }
 
-  // Calculate total price
-  const nights = Math.ceil(
-    (new Date(checkOut).getTime() - new Date(checkIn).getTime()) /
-      (1000 * 60 * 60 * 24)
-  );
-  const totalPrice = room.price * nights;
+    if (room.status !== 'AVAILABLE') {
+      return res.status(400).json({ message: 'Room is not available' });
+    }
 
-  const reservation = await prisma.reservation.create({
-    data: {
-      userId,
-      roomId,
-      checkIn: new Date(checkIn),
-      checkOut: new Date(checkOut),
-      guestCount,
-      specialRequests,
-      totalPrice,
-      status: 'PENDING',
-    },
-    include: {
-      room: {
-        include: {
-          hotel: true,
+    // Check if room is already booked for the selected dates
+    const existingReservation = await prisma.reservation.findFirst({
+      where: {
+        roomId,
+        status: 'CONFIRMED',
+        OR: [
+          {
+            AND: [
+              { checkIn: { lte: new Date(checkIn) } },
+              { checkOut: { gt: new Date(checkIn) } },
+            ],
+          },
+          {
+            AND: [
+              { checkIn: { lt: new Date(checkOut) } },
+              { checkOut: { gte: new Date(checkOut) } },
+            ],
+          },
+        ],
+      },
+    });
+
+    if (existingReservation) {
+      return res.status(400).json({ message: 'Room is already booked for these dates' });
+    }
+
+    // Calculate total price
+    const checkInDate = new Date(checkIn);
+    const checkOutDate = new Date(checkOut);
+    const nights = Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24));
+    const totalPrice = room.price * nights;
+
+    // Create reservation
+    const reservation = await prisma.reservation.create({
+      data: {
+        userId,
+        roomId,
+        checkIn: checkInDate,
+        checkOut: checkOutDate,
+        guestCount,
+        specialRequests,
+        totalPrice,
+        status: 'CONFIRMED',
+      },
+      include: {
+        user: true,
+        room: {
+          include: {
+            hotel: true,
+          },
         },
       },
-      user: {
-        select: {
-          id: true,
-          email: true,
-          firstName: true,
-          lastName: true,
-        },
-      },
-    },
-  });
+    });
 
-  res.status(201).json(reservation);
+    // Send confirmation email
+    await sendReservationConfirmation(
+      reservation.user.email,
+      reservation.user.firstName,
+      {
+        hotelName: reservation.room.hotel.name,
+        roomNumber: reservation.room.number,
+        checkIn: reservation.checkIn,
+        checkOut: reservation.checkOut,
+        totalPrice: reservation.totalPrice,
+      }
+    );
+
+    res.status(201).json(reservation);
+  } catch (error) {
+    console.error('Create reservation error:', error);
+    res.status(500).json({ message: 'Error creating reservation' });
+  }
 };
 
 export const getReservations = async (req: Request, res: Response) => {
-  const userRole = req.user?.role;
-  const userId = req.user?.id;
+  try {
+    const { status, startDate, endDate } = req.query;
+    const userId = req.user?.userId;
+    const userRole = req.user?.role;
 
-  if (!userId) {
-    throw new UnauthorizedError('User not authenticated');
-  }
+    let where: any = {};
 
-  let reservations;
-
-  if (userRole === UserRole.ADMIN) {
-    // Admin can see all reservations
-    reservations = await prisma.reservation.findMany({
-      include: {
-        room: {
-          include: {
-            hotel: true,
-          },
-        },
-        user: {
-          select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-  } else if (userRole === UserRole.MANAGER) {
-    // Manager can see reservations for their hotels
-    reservations = await prisma.reservation.findMany({
-      where: {
-        room: {
-          hotel: {
-            managerId: userId,
-          },
-        },
-      },
-      include: {
-        room: {
-          include: {
-            hotel: true,
-          },
-        },
-        user: {
-          select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-  } else {
     // Regular users can only see their own reservations
-    reservations = await prisma.reservation.findMany({
-      where: {
-        userId,
-      },
+    if (userRole === UserRole.USER) {
+      where.userId = userId;
+    }
+
+    // Filter by status
+    if (status) {
+      where.status = status;
+    }
+
+    // Filter by date range
+    if (startDate || endDate) {
+      where.OR = [];
+      if (startDate) {
+        where.OR.push({ checkIn: { gte: new Date(startDate as string) } });
+      }
+      if (endDate) {
+        where.OR.push({ checkOut: { lte: new Date(endDate as string) } });
+      }
+    }
+
+    const reservations = await prisma.reservation.findMany({
+      where,
       include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
         room: {
           include: {
             hotel: true,
           },
         },
-        user: {
-          select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
       },
       orderBy: {
-        createdAt: 'desc',
+        checkIn: 'desc',
       },
     });
-  }
 
-  res.json(reservations);
+    res.json(reservations);
+  } catch (error) {
+    console.error('Get reservations error:', error);
+    res.status(500).json({ message: 'Error fetching reservations' });
+  }
 };
 
 export const getReservationById = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const userRole = req.user?.role;
-  const userId = req.user?.id;
+  try {
+    const { id } = req.params;
+    const userId = req.user?.userId;
+    const userRole = req.user?.role;
 
-  if (!userId) {
-    throw new UnauthorizedError('User not authenticated');
-  }
-
-  const reservation = await prisma.reservation.findUnique({
-    where: { id },
-    include: {
-      room: {
-        include: {
-          hotel: true,
+    const reservation = await prisma.reservation.findUnique({
+      where: { id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
         },
-      },
-      user: {
-        select: {
-          id: true,
-          email: true,
-          firstName: true,
-          lastName: true,
+        room: {
+          include: {
+            hotel: true,
+          },
         },
-      },
-    },
-  });
-
-  if (!reservation) {
-    throw new NotFoundError('Reservation not found');
-  }
-
-  // Check if user has permission to view this reservation
-  if (
-    userRole !== UserRole.ADMIN &&
-    userRole !== UserRole.MANAGER &&
-    reservation.userId !== userId
-  ) {
-    throw new UnauthorizedError('Not authorized to view this reservation');
-  }
-
-  // If user is a manager, check if they manage the hotel
-  if (userRole === UserRole.MANAGER) {
-    const hotel = await prisma.hotel.findFirst({
-      where: {
-        id: reservation.room.hotelId,
-        managerId: userId,
       },
     });
 
-    if (!hotel) {
-      throw new UnauthorizedError('Not authorized to view this reservation');
+    if (!reservation) {
+      return res.status(404).json({ message: 'Reservation not found' });
     }
-  }
 
-  res.json(reservation);
+    // Check if user has permission to view this reservation
+    if (userRole === UserRole.USER && reservation.userId !== userId) {
+      return res.status(403).json({ message: 'Not authorized to view this reservation' });
+    }
+
+    res.json(reservation);
+  } catch (error) {
+    console.error('Get reservation error:', error);
+    res.status(500).json({ message: 'Error fetching reservation' });
+  }
 };
 
-export const updateReservationStatus = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const { status } = req.body;
-  const userRole = req.user?.role;
-  const userId = req.user?.id;
-
-  if (!userId) {
-    throw new UnauthorizedError('User not authenticated');
-  }
-
-  const reservation = await prisma.reservation.findUnique({
-    where: { id },
-    include: {
-      room: {
-        include: {
-          hotel: true,
+export const getAllReservations = async (req: Request, res: Response) => {
+  try {
+    const reservations = await prisma.reservation.findMany({
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+        room: {
+          include: {
+            hotel: {
+              select: {
+                id: true,
+                name: true,
+                city: true,
+                country: true,
+              },
+            },
+          },
         },
       },
-    },
-  });
-
-  if (!reservation) {
-    throw new NotFoundError('Reservation not found');
-  }
-
-  // Check if user has permission to update this reservation
-  if (userRole === UserRole.ADMIN) {
-    // Admin can update any reservation
-  } else if (userRole === UserRole.MANAGER) {
-    // Manager can only update reservations for their hotels
-    const hotel = await prisma.hotel.findFirst({
-      where: {
-        id: reservation.room.hotelId,
-        managerId: userId,
+      orderBy: {
+        createdAt: 'desc',
       },
     });
-
-    if (!hotel) {
-      throw new UnauthorizedError('Not authorized to update this reservation');
-    }
-  } else {
-    throw new UnauthorizedError('Not authorized to update reservations');
+    res.json(reservations);
+  } catch (error) {
+    console.error('Error fetching reservations:', error);
+    res.status(500).json({ message: 'Error fetching reservations' });
   }
-
-  const updatedReservation = await prisma.reservation.update({
-    where: { id },
-    data: { status },
-    include: {
-      room: {
-        include: {
-          hotel: true,
-        },
-      },
-      user: {
-        select: {
-          id: true,
-          email: true,
-          firstName: true,
-          lastName: true,
-        },
-      },
-    },
-  });
-
-  res.json(updatedReservation);
 };
 
-export const cancelReservation = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const userRole = req.user?.role;
-  const userId = req.user?.id;
+export const updateReservation = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { status, checkIn, checkOut, guestCount, specialRequests } = req.body;
 
-  if (!userId) {
-    throw new UnauthorizedError('User not authenticated');
-  }
-
-  const reservation = await prisma.reservation.findUnique({
-    where: { id },
-    include: {
-      room: {
-        include: {
-          hotel: true,
-        },
+    const reservation = await prisma.reservation.update({
+      where: { id },
+      data: {
+        status,
+        checkIn: checkIn ? new Date(checkIn) : undefined,
+        checkOut: checkOut ? new Date(checkOut) : undefined,
+        guestCount,
+        specialRequests,
       },
-    },
-  });
-
-  if (!reservation) {
-    throw new NotFoundError('Reservation not found');
-  }
-
-  // Check if user has permission to cancel this reservation
-  if (
-    userRole !== UserRole.ADMIN &&
-    userRole !== UserRole.MANAGER &&
-    reservation.userId !== userId
-  ) {
-    throw new UnauthorizedError('Not authorized to cancel this reservation');
-  }
-
-  // If user is a manager, check if they manage the hotel
-  if (userRole === UserRole.MANAGER) {
-    const hotel = await prisma.hotel.findFirst({
-      where: {
-        id: reservation.room.hotelId,
-        managerId: userId,
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+        room: {
+          include: {
+            hotel: {
+              select: {
+                id: true,
+                name: true,
+                city: true,
+                country: true,
+              },
+            },
+          },
+        },
       },
     });
 
-    if (!hotel) {
-      throw new UnauthorizedError('Not authorized to cancel this reservation');
+    // Update room status based on reservation status
+    if (status === ReservationStatus.CONFIRMED) {
+      await prisma.room.update({
+        where: { id: reservation.roomId },
+        data: { status: 'OCCUPIED' },
+      });
+    } else if (status === ReservationStatus.CANCELLED || status === ReservationStatus.COMPLETED) {
+      await prisma.room.update({
+        where: { id: reservation.roomId },
+        data: { status: 'AVAILABLE' },
+      });
     }
+
+    res.json(reservation);
+  } catch (error) {
+    console.error('Error updating reservation:', error);
+    res.status(500).json({ message: 'Error updating reservation' });
   }
+};
 
-  // Check if reservation can be cancelled
-  if (reservation.status === 'CANCELLED') {
-    throw new BadRequestError('Reservation is already cancelled');
+export const deleteReservation = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const reservation = await prisma.reservation.findUnique({
+      where: { id },
+    });
+
+    if (!reservation) {
+      return res.status(404).json({ message: 'Reservation not found' });
+    }
+
+    // Only allow deletion of pending or cancelled reservations
+    if (reservation.status !== 'PENDING' && reservation.status !== 'CANCELLED') {
+      return res.status(400).json({ message: 'Cannot delete confirmed or completed reservations' });
+    }
+
+    await prisma.reservation.delete({
+      where: { id },
+    });
+
+    res.json({ message: 'Reservation deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting reservation:', error);
+    res.status(500).json({ message: 'Error deleting reservation' });
   }
-
-  if (reservation.status === 'COMPLETED') {
-    throw new BadRequestError('Cannot cancel a completed reservation');
-  }
-
-  const updatedReservation = await prisma.reservation.update({
-    where: { id },
-    data: { status: 'CANCELLED' },
-    include: {
-      room: {
-        include: {
-          hotel: true,
-        },
-      },
-      user: {
-        select: {
-          id: true,
-          email: true,
-          firstName: true,
-          lastName: true,
-        },
-      },
-    },
-  });
-
-  res.json(updatedReservation);
 }; 

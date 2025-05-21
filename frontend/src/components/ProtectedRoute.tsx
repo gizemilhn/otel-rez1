@@ -1,19 +1,19 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../providers/AuthProvider';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requireAdmin?: boolean;
-  requireYonetici?: boolean;
+  requireManager?: boolean;
 }
 
 export default function ProtectedRoute({
   children,
   requireAdmin,
-  requireYonetici,
+  requireManager,
 }: ProtectedRouteProps) {
-  const { user, isAdmin, isYonetici } = useAuth();
+  const { user, isAdmin, isManager } = useAuth();
 
   if (!user) {
     return <Navigate to="/giris" replace />;
@@ -23,7 +23,7 @@ export default function ProtectedRoute({
     return <Navigate to="/" replace />;
   }
 
-  if (requireYonetici && !isYonetici) {
+  if (requireManager && !isManager) {
     return <Navigate to="/" replace />;
   }
 
