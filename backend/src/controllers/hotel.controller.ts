@@ -26,7 +26,31 @@ export const getAllHotels = async (req: Request, res: Response) => {
 
 export const createHotel = async (req: Request, res: Response) => {
   try {
-    const { name, address, city, country, description, imageUrl, rating } = req.body;
+    const { name, address, city, country, description, imageUrl, rating, managerId } = req.body;
+
+    // Check if manager exists and has MANAGER role
+    const manager = await prisma.user.findFirst({
+      where: {
+        id: managerId,
+        role: 'MANAGER',
+      },
+    });
+
+    if (!manager) {
+      return res.status(400).json({ message: 'Invalid manager ID or user is not a manager' });
+    }
+
+    // Check if manager is already assigned to another hotel
+    const existingHotel = await prisma.hotel.findFirst({
+      where: {
+        managerId,
+      },
+    });
+
+    if (existingHotel) {
+      return res.status(400).json({ message: 'Manager is already assigned to another hotel' });
+    }
+
     const hotel = await prisma.hotel.create({
       data: {
         name,
@@ -36,6 +60,17 @@ export const createHotel = async (req: Request, res: Response) => {
         description,
         imageUrl,
         rating,
+        managerId,
+      },
+      include: {
+        manager: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
       },
     });
     res.status(201).json(hotel);
@@ -48,7 +83,35 @@ export const createHotel = async (req: Request, res: Response) => {
 export const updateHotel = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, address, city, country, description, imageUrl, rating } = req.body;
+    const { name, address, city, country, description, imageUrl, rating, managerId } = req.body;
+
+    // If managerId is being updated, validate it
+    if (managerId) {
+      // Check if manager exists and has MANAGER role
+      const manager = await prisma.user.findFirst({
+        where: {
+          id: managerId,
+          role: 'MANAGER',
+        },
+      });
+
+      if (!manager) {
+        return res.status(400).json({ message: 'Invalid manager ID or user is not a manager' });
+      }
+
+      // Check if manager is already assigned to another hotel
+      const existingHotel = await prisma.hotel.findFirst({
+        where: {
+          managerId,
+          id: { not: id },
+        },
+      });
+
+      if (existingHotel) {
+        return res.status(400).json({ message: 'Manager is already assigned to another hotel' });
+      }
+    }
+
     const hotel = await prisma.hotel.update({
       where: { id },
       data: {
@@ -59,6 +122,17 @@ export const updateHotel = async (req: Request, res: Response) => {
         description,
         imageUrl,
         rating,
+        managerId: managerId || undefined, // Only update managerId if it's provided
+      },
+      include: {
+        manager: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
       },
     });
     res.json(hotel);

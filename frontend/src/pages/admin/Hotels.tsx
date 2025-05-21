@@ -19,8 +19,17 @@ interface Hotel {
   };
 }
 
+interface User {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+}
+
 const Hotels = () => {
   const [hotels, setHotels] = useState<Hotel[]>([]);
+  const [managers, setManagers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -33,10 +42,12 @@ const Hotels = () => {
     description: '',
     imageUrl: '',
     rating: 0,
+    managerId: '',
   });
 
   useEffect(() => {
     fetchHotels();
+    fetchManagers();
   }, []);
 
   const fetchHotels = async () => {
@@ -50,6 +61,16 @@ const Hotels = () => {
       setError('Failed to fetch hotels');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchManagers = async () => {
+    try {
+      const response = await api.get('/admin/users');
+      const managerUsers = response.data.filter((user: User) => user.role === 'MANAGER');
+      setManagers(managerUsers);
+    } catch (error) {
+      console.error('Error fetching managers:', error);
     }
   };
 
@@ -71,6 +92,7 @@ const Hotels = () => {
         description: '',
         imageUrl: '',
         rating: 0,
+        managerId: '',
       });
       fetchHotels();
     } catch (error) {
@@ -82,13 +104,14 @@ const Hotels = () => {
   const handleEdit = (hotel: Hotel) => {
     setSelectedHotel(hotel);
     setFormData({
-      name: hotel.name,
-      address: hotel.address,
-      city: hotel.city,
-      country: hotel.country,
-      description: hotel.description,
-      imageUrl: hotel.imageUrl,
-      rating: hotel.rating,
+      name: hotel.name || '',
+      address: hotel.address || '',
+      city: hotel.city || '',
+      country: hotel.country || '',
+      description: hotel.description || '',
+      imageUrl: hotel.imageUrl || '',
+      rating: hotel.rating || 0,
+      managerId: hotel.manager?.id || '',
     });
     setIsModalOpen(true);
   };
@@ -114,7 +137,7 @@ const Hotels = () => {
   }
 
   return (
-    <div>
+    <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Oteller</h1>
         <button
@@ -128,83 +151,93 @@ const Hotels = () => {
               description: '',
               imageUrl: '',
               rating: 0,
+              managerId: '',
             });
             setIsModalOpen(true);
           }}
-          className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center"
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center"
         >
-          <FaPlus className="mr-2" />
-          Yeni Otel
+          <FaPlus className="mr-2" /> Yeni Otel Ekle
         </button>
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Otel Adı
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Şehir
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Ülke
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Yönetici
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Puan
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                İşlemler
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {hotels.map((hotel) => (
-              <tr key={hotel.id}>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">
-                    {hotel.name}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-500">{hotel.city}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-500">{hotel.country}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-500">
-                    {hotel.manager
-                      ? `${hotel.manager.firstName} ${hotel.manager.lastName}`
-                      : 'Atanmamış'}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-500">{hotel.rating}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <button
-                    onClick={() => handleEdit(hotel)}
-                    className="text-indigo-600 hover:text-indigo-900 mr-4"
-                  >
-                    <FaEdit />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(hotel.id)}
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    <FaTrash />
-                  </button>
-                </td>
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      ) : (
+        <div className="bg-white shadow-md rounded-lg overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Otel Adı
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Şehir
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Ülke
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Yönetici
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Puan
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  İşlemler
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {hotels.map((hotel) => (
+                <tr key={hotel.id}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">{hotel.name}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-500">{hotel.city}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-500">{hotel.country}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-500">
+                      {hotel.manager
+                        ? `${hotel.manager.firstName} ${hotel.manager.lastName}`
+                        : 'Yönetici Atanmamış'}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-500">{hotel.rating}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button
+                      onClick={() => handleEdit(hotel)}
+                      className="text-indigo-600 hover:text-indigo-900 mr-4"
+                    >
+                      <FaEdit />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(hotel.id)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      <FaTrash />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
@@ -316,17 +349,37 @@ const Hotels = () => {
                     required
                   />
                 </div>
+                <div className="mb-4">
+                  <label className="block text-gray-700 text-sm font-bold mb-2">
+                    Yönetici
+                  </label>
+                  <select
+                    value={formData.managerId}
+                    onChange={(e) =>
+                      setFormData({ ...formData, managerId: e.target.value })
+                    }
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    required
+                  >
+                    <option value="">Yönetici Seçin</option>
+                    {managers.map((manager) => (
+                      <option key={manager.id} value={manager.id}>
+                        {manager.firstName} {manager.lastName} ({manager.email})
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <div className="flex justify-end space-x-3">
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg"
+                    className="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400"
                   >
                     İptal
                   </button>
                   <button
                     type="submit"
-                    className="bg-blue-500 text-white px-4 py-2 rounded-lg"
+                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
                   >
                     {selectedHotel ? 'Güncelle' : 'Ekle'}
                   </button>
