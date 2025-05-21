@@ -22,6 +22,8 @@ import Otel from './pages/yonetici/Otel';
 import Odalar from './pages/yonetici/Odalar';
 import Rezervasyonlar from './pages/yonetici/Rezervasyonlar';
 import YoneticiDashboard from './pages/yonetici/Dashboard';
+import Profil from './pages/Profil';
+import Rezervasyonlarim from './pages/Rezervasyonlarim';
 
 export default function App() {
   return (
@@ -36,6 +38,8 @@ export default function App() {
         <Route path="hakkimizda" element={<Hakkimizda />} />
         <Route path="iletisim" element={<Iletisim />} />
         <Route path="gizlilik-politikasi" element={<GizlilikPolitikasi />} />
+        <Route path="profil" element={<Profil />} />
+        <Route path="rezervasyonlarim" element={<Rezervasyonlarim />} />
       </Route>
 
       {/* Admin Routes */}

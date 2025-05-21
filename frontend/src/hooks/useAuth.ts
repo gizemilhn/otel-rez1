@@ -1,14 +1,7 @@
 import { useState, useEffect } from 'react';
 import { authService } from '../services/api';
 import { useNavigate, useLocation } from 'react-router-dom';
-
-interface User {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: 'ADMIN' | 'MANAGER' | 'USER';
-}
+import type { User, UserRole } from '../types';
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);

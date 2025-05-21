@@ -106,9 +106,9 @@ export default function Odalar() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold text-gray-900">Odalar</h2>
+        <h1 className="text-2xl font-bold">Odalar</h1>
         <button
           onClick={() => {
             setEditingRoom(null);
@@ -123,61 +123,74 @@ export default function Odalar() {
             });
             setShowModal(true);
           }}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
         >
           Yeni Oda Ekle
         </button>
       </div>
 
-      <div className="bg-white shadow overflow-hidden sm:rounded-md">
+      <div className="bg-white shadow rounded-lg">
         <ul className="divide-y divide-gray-200">
           {rooms.map((room) => (
-            <li key={room.id}>
-              <div className="px-4 py-4 sm:px-6">
-                <div className="flex items-center justify-between">
+            <li key={room.id} className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
                   <div className="flex items-center">
-                    <p className="text-sm font-medium text-blue-600 truncate">
-                      Oda {room.number}
-                    </p>
-                    <p className="ml-2 flex-shrink-0 inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                      {room.type}
-                    </p>
+                    <div className="flex-shrink-0 h-16 w-16">
+                      {room.imageUrl ? (
+                        <img
+                          src={room.imageUrl}
+                          alt={room.number}
+                          className="h-16 w-16 rounded-lg object-cover"
+                        />
+                      ) : (
+                        <div className="h-16 w-16 rounded-lg bg-gray-200 flex items-center justify-center">
+                          <span className="text-gray-400">No image</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="ml-4">
+                      <h3 className="text-lg font-medium text-gray-900">
+                        Oda {room.number} - {room.type}
+                      </h3>
+                      <p className="text-sm text-gray-500">{room.description}</p>
+                    </div>
                   </div>
-                  <div className="ml-2 flex-shrink-0 flex">
-                    <button
-                      onClick={() => handleEdit(room)}
-                      className="mr-2 inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    >
-                      Düzenle
-                    </button>
-                    <button
-                      onClick={() => handleDelete(room.id)}
-                      className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                    >
-                      Sil
-                    </button>
+                  <div className="mt-2 sm:flex sm:justify-between">
+                    <div className="sm:flex">
+                      <p className="flex items-center text-sm text-gray-500">
+                        Kapasite: {room.capacity} kişi
+                      </p>
+                      <p className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
+                        Fiyat: {room.price} TL/gece
+                      </p>
+                    </div>
+                    <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        room.status === 'AVAILABLE' ? 'bg-green-100 text-green-800' :
+                        room.status === 'OCCUPIED' ? 'bg-red-100 text-red-800' :
+                        'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {room.status === 'AVAILABLE' ? 'Müsait' :
+                         room.status === 'OCCUPIED' ? 'Dolu' :
+                         'Bakımda'}
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <div className="mt-2 sm:flex sm:justify-between">
-                  <div className="sm:flex">
-                    <p className="flex items-center text-sm text-gray-500">
-                      Kapasite: {room.capacity} kişi
-                    </p>
-                    <p className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
-                      Fiyat: {room.price} TL/gece
-                    </p>
-                  </div>
-                  <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      room.status === 'AVAILABLE' ? 'bg-green-100 text-green-800' :
-                      room.status === 'OCCUPIED' ? 'bg-red-100 text-red-800' :
-                      'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {room.status === 'AVAILABLE' ? 'Müsait' :
-                       room.status === 'OCCUPIED' ? 'Dolu' :
-                       'Bakımda'}
-                    </span>
-                  </div>
+                <div className="ml-4 flex-shrink-0 flex space-x-2">
+                  <button
+                    onClick={() => handleEdit(room)}
+                    className="text-indigo-600 hover:text-indigo-900"
+                  >
+                    Düzenle
+                  </button>
+                  <button
+                    onClick={() => handleDelete(room.id)}
+                    className="text-red-600 hover:text-red-900"
+                  >
+                    Sil
+                  </button>
                 </div>
               </div>
             </li>
@@ -186,138 +199,109 @@ export default function Odalar() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 z-[100] overflow-y-auto">
-          <div className="flex min-h-screen items-center justify-center p-4 text-center">
-            <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" aria-hidden="true"></div>
-            <div className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
-                  {editingRoom ? 'Oda Düzenle' : 'Yeni Oda Ekle'}
-                </h3>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label htmlFor="number" className="block text-sm font-medium text-gray-700">
-                      Oda Numarası
-                    </label>
-                    <input
-                      type="text"
-                      id="number"
-                      name="number"
-                      value={formData.number}
-                      onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="type" className="block text-sm font-medium text-gray-700">
-                      Oda Tipi
-                    </label>
-                    <select
-                      id="type"
-                      name="type"
-                      value={formData.type}
-                      onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      required
-                    >
-                      <option value="STANDARD">Standart</option>
-                      <option value="DELUXE">Deluxe</option>
-                      <option value="SUITE">Suit</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label htmlFor="capacity" className="block text-sm font-medium text-gray-700">
-                      Kapasite
-                    </label>
-                    <input
-                      type="number"
-                      id="capacity"
-                      name="capacity"
-                      value={formData.capacity}
-                      onChange={handleChange}
-                      min="1"
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="price" className="block text-sm font-medium text-gray-700">
-                      Fiyat (₺)
-                    </label>
-                    <input
-                      type="number"
-                      id="price"
-                      name="price"
-                      value={formData.price}
-                      onChange={handleChange}
-                      min="0"
-                      step="0.01"
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="status" className="block text-sm font-medium text-gray-700">
-                      Durum
-                    </label>
-                    <select
-                      id="status"
-                      name="status"
-                      value={formData.status}
-                      onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      required
-                    >
-                      <option value="AVAILABLE">Müsait</option>
-                      <option value="OCCUPIED">Dolu</option>
-                      <option value="MAINTENANCE">Bakımda</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                      Açıklama
-                    </label>
-                    <textarea
-                      id="description"
-                      name="description"
-                      value={formData.description}
-                      onChange={handleChange}
-                      rows={3}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700">
-                      Görsel URL
-                    </label>
-                    <input
-                      type="url"
-                      id="imageUrl"
-                      name="imageUrl"
-                      value={formData.imageUrl}
-                      onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                    />
-                  </div>
-                </form>
-              </div>
-              <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
-                >
-                  {editingRoom ? 'Güncelle' : 'Ekle'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                >
-                  İptal
-                </button>
-              </div>
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                {editingRoom ? 'Oda Düzenle' : 'Yeni Oda Ekle'}
+              </h3>
+              <form onSubmit={handleSubmit}>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700">Oda Numarası</label>
+                  <input
+                    type="text"
+                    value={formData.number}
+                    onChange={(e) => setFormData({ ...formData, number: e.target.value })}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    required
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700">Oda Tipi</label>
+                  <select
+                    value={formData.type}
+                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    required
+                  >
+                    <option value="">Tip Seçin</option>
+                    <option value="STANDARD">Standart</option>
+                    <option value="DELUXE">Deluxe</option>
+                    <option value="SUITE">Suit</option>
+                    <option value="FAMILY">Aile</option>
+                    <option value="EXECUTIVE">Executive</option>
+                  </select>
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700">Kapasite</label>
+                  <input
+                    type="number"
+                    value={formData.capacity}
+                    onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) })}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    required
+                    min="1"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700">Fiyat (TL/gece)</label>
+                  <input
+                    type="number"
+                    value={formData.price}
+                    onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    required
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700">Açıklama</label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    rows={3}
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700">Görsel URL</label>
+                  <input
+                    type="url"
+                    value={formData.imageUrl}
+                    onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    placeholder="https://example.com/image.jpg"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700">Durum</label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value as 'AVAILABLE' | 'OCCUPIED' | 'MAINTENANCE' })}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  >
+                    <option value="AVAILABLE">Müsait</option>
+                    <option value="OCCUPIED">Dolu</option>
+                    <option value="MAINTENANCE">Bakımda</option>
+                  </select>
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowModal(false)}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+                  >
+                    İptal
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md"
+                  >
+                    {editingRoom ? 'Güncelle' : 'Ekle'}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>

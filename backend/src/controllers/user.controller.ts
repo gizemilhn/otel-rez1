@@ -134,4 +134,71 @@ export const deleteUser = async (req: Request, res: Response) => {
     console.error('Error deleting user:', error);
     res.status(500).json({ message: 'Error deleting user' });
   }
+};
+
+export const getUserReservations = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.userId;
+
+    const reservations = await prisma.reservation.findMany({
+      where: {
+        userId: userId
+      },
+      include: {
+        room: {
+          include: {
+            hotel: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    res.json(reservations);
+  } catch (error) {
+    console.error('Error fetching user reservations:', error);
+    res.status(500).json({ message: 'Error fetching reservations' });
+  }
+};
+
+export const cancelReservation = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.userId;
+
+    // Check if reservation exists and belongs to user
+    const reservation = await prisma.reservation.findFirst({
+      where: {
+        id,
+        userId,
+        status: 'PENDING',
+      },
+      include: {
+        room: true,
+      },
+    });
+
+    if (!reservation) {
+      return res.status(404).json({ message: 'Reservation not found or cannot be cancelled' });
+    }
+
+    // Update reservation status
+    await prisma.reservation.update({
+      where: { id },
+      data: { status: 'CANCELLED' },
+    });
+
+    // Update room status back to available
+    await prisma.room.update({
+      where: { id: reservation.room.id },
+      data: { status: 'AVAILABLE' },
+    });
+
+    res.json({ message: 'Reservation cancelled successfully' });
+  } catch (error) {
+    console.error('Error cancelling reservation:', error);
+    res.status(500).json({ message: 'Error cancelling reservation' });
+  }
 }; 

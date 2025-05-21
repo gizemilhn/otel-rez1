@@ -44,7 +44,7 @@ export default function Dashboard() {
     try {
       const [rooms, reservations] = await Promise.all([
         roomService.getMyHotelRooms(),
-        reservationService.getMyHotelReservations(),
+        reservationService.getManagerReservations(),
       ]);
 
       const roomStats = {

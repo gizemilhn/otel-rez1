@@ -119,38 +119,44 @@ export const rezervasyonService = {
 
 export const otelService = {
   getAll: async () => {
-    const response = await api.get('/oteller');
+    const response = await api.get('/hotels');
     return response.data;
   },
-  getById: async (id: number) => {
-    const response = await api.get(`/oteller/${id}`);
+  getById: async (id: string) => {
+    const response = await api.get(`/hotels/${id}`);
     return response.data;
   },
   create: async (data: {
-    ad: string;
-    aciklama: string;
-    adres: string;
-    sehir: string;
-    resim: string;
+    name: string;
+    description: string;
+    address: string;
+    city: string;
+    country: string;
+    rating: number;
+    imageUrl: string;
+    price: number;
   }) => {
-    const response = await api.post('/oteller', data);
+    const response = await api.post('/hotels', data);
     return response.data;
   },
   update: async (
-    id: number,
+    id: string,
     data: {
-      ad?: string;
-      aciklama?: string;
-      adres?: string;
-      sehir?: string;
-      resim?: string;
+      name?: string;
+      description?: string;
+      address?: string;
+      city?: string;
+      country?: string;
+      rating?: number;
+      imageUrl?: string;
+      price?: number;
     }
   ) => {
-    const response = await api.put(`/oteller/${id}`, data);
+    const response = await api.put(`/hotels/${id}`, data);
     return response.data;
   },
-  delete: async (id: number) => {
-    const response = await api.delete(`/oteller/${id}`);
+  delete: async (id: string) => {
+    const response = await api.delete(`/hotels/${id}`);
     return response.data;
   },
 };
@@ -176,6 +182,7 @@ export const userService = {
 export const roomService = {
   getAll: () => api.get('/admin/rooms').then(res => res.data),
   getById: (id: string) => api.get(`/admin/rooms/${id}`).then(res => res.data),
+  getByHotelId: (hotelId: string) => api.get(`/hotels/${hotelId}/rooms`).then(res => res.data),
   create: (data: any) => api.post('/admin/rooms', data).then(res => res.data),
   update: (id: string, data: any) => api.put(`/admin/rooms/${id}`, data).then(res => res.data),
   delete: (id: string) => api.delete(`/admin/rooms/${id}`).then(res => res.data),
@@ -187,12 +194,16 @@ export const roomService = {
 
 export const reservationService = {
   getAll: () => api.get('/admin/reservations').then(res => res.data),
-  update: (id: string, data: any) => api.put(`/admin/reservations/${id}`, data).then(res => res.data),
-  delete: (id: string) => api.delete(`/admin/reservations/${id}`).then(res => res.data),
-  cancel: (id: string) => api.put(`/admin/reservations/${id}/status`, { status: 'CANCELLED' }).then(res => res.data),
+  create: (data: any) => api.post('/reservations', data).then(res => res.data),
+  update: (id: string, data: any) => api.put(`/reservations/${id}`, data).then(res => res.data),
+  delete: (id: string) => api.delete(`/reservations/${id}`).then(res => res.data),
+  cancel: (id: string) => api.put(`/reservations/${id}/status`, { status: 'CANCELLED' }).then(res => res.data),
   getMyHotelReservations: () => api.get('/manager/reservations').then(res => res.data),
   updateStatus: (reservationId: string, status: string) => 
     api.put(`/manager/reservations/${reservationId}/status`, { status }).then(res => res.data),
+  getManagerReservations: () => api.get('/manager/reservations').then(res => res.data),
+  updateReservation: (id: string, data: any) => api.put(`/manager/reservations/${id}`, data).then(res => res.data),
+  getMyReservations: () => api.get('/reservations/my-reservations').then(res => res.data),
 };
 
 export default api; 

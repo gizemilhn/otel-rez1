@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../providers/AuthProvider';
+import { useAuth } from '../contexts/AuthContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -13,18 +13,22 @@ export default function ProtectedRoute({
   requireAdmin,
   requireManager,
 }: ProtectedRouteProps) {
-  const { user, isAdmin, isManager } = useAuth();
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   if (!user) {
-    return <Navigate to="/giris" replace />;
+    return <Navigate to="/giris" />;
   }
 
-  if (requireAdmin && !isAdmin) {
-    return <Navigate to="/" replace />;
+  if (requireAdmin && user.role !== 'ADMIN') {
+    return <Navigate to="/" />;
   }
 
-  if (requireManager && !isManager) {
-    return <Navigate to="/" replace />;
+  if (requireManager && user.role !== 'MANAGER') {
+    return <Navigate to="/" />;
   }
 
   return <>{children}</>;

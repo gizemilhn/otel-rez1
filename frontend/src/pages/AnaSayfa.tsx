@@ -1,58 +1,69 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Hero from '../components/Hero';
 import OtelCard from '../components/OtelCard';
+import { otelService } from '../services/api';
+import { toast } from 'react-toastify';
 
-const featuredHotels = [
-  {
-    id: 1,
-    ad: 'Grand Hotel İstanbul',
-    aciklama: 'Boğaz manzaralı lüks otel, spa ve restoran hizmetleri',
-    fiyat: 2500,
-    puan: 4.8,
-    resim: '/images/oteller/grand-hotel.jpg',
-    konum: 'İstanbul, Beşiktaş',
-  },
-  {
-    id: 2,
-    ad: 'Blue Resort Antalya',
-    aciklama: 'Deniz manzaralı resort otel, özel plaj ve su sporları',
-    fiyat: 1800,
-    puan: 4.6,
-    resim: '/images/oteller/blue-resort.jpg',
-    konum: 'Antalya, Konyaaltı',
-  },
-  {
-    id: 3,
-    ad: 'Mountain Lodge Bolu',
-    aciklama: 'Doğa ile iç içe konaklama, kayak ve doğa sporları',
-    fiyat: 1200,
-    puan: 4.7,
-    resim: '/images/oteller/mountain-lodge.jpg',
-    konum: 'Bolu, Kartalkaya',
-  },
-];
+interface Hotel {
+  id: string;
+  name: string;
+  description: string;
+  address: string;
+  city: string;
+  country: string;
+  rating: number;
+  imageUrl: string;
+  price: number;
+}
 
 export default function AnaSayfa() {
+  const [hotels, setHotels] = useState<Hotel[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchHotels();
+  }, []);
+
+  const fetchHotels = async () => {
+    try {
+      const data = await otelService.getAll();
+      setHotels(data);
+    } catch (error) {
+      toast.error('Oteller yüklenirken bir hata oluştu.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-full">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
   return (
-    <div>
+    <div className="container mx-auto px-4 py-8">
       <Hero />
       
-      {/* Featured Hotels Section */}
-      <div className="bg-white py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              Öne Çıkan Oteller
-            </h2>
-            <p className="mt-2 text-lg leading-8 text-gray-600">
-              En çok tercih edilen ve en yüksek puanlı otellerimizi keşfedin
-            </p>
-          </div>
-          <div className="mx-auto mt-16 grid max-w-2xl grid-cols-1 gap-x-8 gap-y-20 lg:mx-0 lg:max-w-none lg:grid-cols-3">
-            {featuredHotels.map((hotel) => (
-              <OtelCard key={hotel.id} {...hotel} />
-            ))}
-          </div>
+      <div className="mt-12">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Öne Çıkan Oteller</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {hotels.map((hotel) => (
+            <OtelCard
+              key={hotel.id}
+              id={hotel.id}
+              name={hotel.name}
+              description={hotel.description}
+              address={hotel.address}
+              city={hotel.city}
+              country={hotel.country}
+              rating={hotel.rating}
+              imageUrl={hotel.imageUrl}
+              price={hotel.price}
+            />
+          ))}
         </div>
       </div>
 

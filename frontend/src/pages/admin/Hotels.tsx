@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
 import api from '../../config/axios';
+import { toast } from 'react-toastify';
 
 interface Hotel {
   id: string;
@@ -77,10 +78,17 @@ const Hotels = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const submitData = {
+        ...formData,
+        rating: Number(formData.rating),
+      };
+
       if (selectedHotel) {
-        await api.put(`/admin/hotels/${selectedHotel.id}`, formData);
+        await api.put(`/admin/hotels/${selectedHotel.id}`, submitData);
+        toast.success('Otel başarıyla güncellendi');
       } else {
-        await api.post('/admin/hotels', formData);
+        await api.post('/admin/hotels', submitData);
+        toast.success('Otel başarıyla oluşturuldu');
       }
       setIsModalOpen(false);
       setSelectedHotel(null);
@@ -95,9 +103,11 @@ const Hotels = () => {
         managerId: '',
       });
       fetchHotels();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving hotel:', error);
-      setError('Failed to save hotel');
+      const errorMessage = error.response?.data?.message || 'Failed to save hotel';
+      toast.error(errorMessage);
+      setError(errorMessage);
     }
   };
 
@@ -117,23 +127,26 @@ const Hotels = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this hotel?')) {
+    if (window.confirm('Bu oteli silmek istediğinizden emin misiniz?')) {
       try {
         await api.delete(`/admin/hotels/${id}`);
+        toast.success('Otel başarıyla silindi');
         fetchHotels();
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error deleting hotel:', error);
-        setError('Failed to delete hotel');
+        const errorMessage = error.response?.data?.message || 'Failed to delete hotel';
+        toast.error(errorMessage);
+        setError(errorMessage);
       }
     }
   };
 
   if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (error) {
-    return <div className="text-red-500">{error}</div>;
+    return (
+      <div className="flex justify-center items-center h-full">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
   }
 
   return (
@@ -167,77 +180,69 @@ const Hotels = () => {
         </div>
       )}
 
-      {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
-      ) : (
-        <div className="bg-white shadow-md rounded-lg overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Otel Adı
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Şehir
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Ülke
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Yönetici
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Puan
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  İşlemler
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {hotels.map((hotel) => (
-                <tr key={hotel.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{hotel.name}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{hotel.city}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{hotel.country}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">
-                      {hotel.manager
-                        ? `${hotel.manager.firstName} ${hotel.manager.lastName}`
-                        : 'Yönetici Atanmamış'}
+      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Otel Adı
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Şehir
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Yönetici
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Puan
+              </th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                İşlemler
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {hotels.map((hotel) => (
+              <tr key={hotel.id}>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm font-medium text-gray-900">{hotel.name}</div>
+                  <div className="text-sm text-gray-500">{hotel.address}</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">{hotel.city}</div>
+                  <div className="text-sm text-gray-500">{hotel.country}</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {hotel.manager ? (
+                    <div className="text-sm text-gray-900">
+                      {hotel.manager.firstName} {hotel.manager.lastName}
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{hotel.rating}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => handleEdit(hotel)}
-                      className="text-indigo-600 hover:text-indigo-900 mr-4"
-                    >
-                      <FaEdit />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(hotel.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      <FaTrash />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+                  ) : (
+                    <div className="text-sm text-gray-500">Atanmamış</div>
+                  )}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">{hotel.rating}</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <button
+                    onClick={() => handleEdit(hotel)}
+                    className="text-indigo-600 hover:text-indigo-900 mr-4"
+                  >
+                    <FaEdit />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(hotel.id)}
+                    className="text-red-600 hover:text-red-900"
+                  >
+                    <FaTrash />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
@@ -321,7 +326,7 @@ const Hotels = () => {
                     Resim URL
                   </label>
                   <input
-                    type="url"
+                    type="text"
                     value={formData.imageUrl}
                     onChange={(e) =>
                       setFormData({ ...formData, imageUrl: e.target.value })
@@ -340,13 +345,9 @@ const Hotels = () => {
                     step="0.1"
                     value={formData.rating}
                     onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        rating: parseFloat(e.target.value),
-                      })
+                      setFormData({ ...formData, rating: parseFloat(e.target.value) || 0 })
                     }
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    required
                   />
                 </div>
                 <div className="mb-4">
@@ -381,7 +382,7 @@ const Hotels = () => {
                     type="submit"
                     className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
                   >
-                    {selectedHotel ? 'Güncelle' : 'Ekle'}
+                    {selectedHotel ? 'Güncelle' : 'Oluştur'}
                   </button>
                 </div>
               </form>

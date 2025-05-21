@@ -25,7 +25,7 @@ export const getAllRooms = async (req: Request, res: Response) => {
 
 export const createRoom = async (req: Request, res: Response) => {
   try {
-    const { number, type, price, capacity, description, hotelId } = req.body;
+    const { number, type, price, capacity, description, imageUrl, hotelId } = req.body;
 
     // Check if hotel exists
     const hotel = await prisma.hotel.findUnique({
@@ -43,6 +43,7 @@ export const createRoom = async (req: Request, res: Response) => {
         price,
         capacity,
         description,
+        imageUrl,
         hotelId,
         status: RoomStatus.AVAILABLE,
       },
@@ -134,7 +135,7 @@ export const getRoomById = async (req: Request, res: Response) => {
 export const updateRoom = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { number, type, price, capacity, description, status } = req.body;
+    const { number, type, price, capacity, description, imageUrl, status } = req.body;
 
     const room = await prisma.room.update({
       where: { id },
@@ -144,6 +145,7 @@ export const updateRoom = async (req: Request, res: Response) => {
         price,
         capacity,
         description,
+        imageUrl,
         status,
       },
       include: {

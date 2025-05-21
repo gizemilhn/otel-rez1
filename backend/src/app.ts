@@ -11,6 +11,7 @@ import hotelRoutes from './routes/hotel.routes';
 import roomRoutes from './routes/room.routes';
 import reservationRoutes from './routes/reservation.routes';
 import hotelManagerRoutes from './routes/hotel.manager.routes';
+import userRoutes from './routes/user.routes';
 
 // Load environment variables
 config();
@@ -39,6 +40,7 @@ app.use('/api/hotels', hotelRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/reservations', reservationRoutes);
 app.use('/api/manager', hotelManagerRoutes);
+app.use('/api/user', userRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

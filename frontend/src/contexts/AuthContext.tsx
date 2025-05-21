@@ -76,6 +76,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         navigate('/');
       }
+
+      return user;
     } catch (error) {
       console.error('Login error:', error);
       setError('Invalid email or password');

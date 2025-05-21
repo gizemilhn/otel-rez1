@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Building2, Menu, X, User, LogOut } from 'lucide-react';
-import { useAuth } from '../providers/AuthProvider';
+import { Building2, Menu, X, User, LogOut, Calendar } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const navItems = [
   { name: 'Ana Sayfa', path: '/' },
@@ -12,7 +12,7 @@ const navItems = [
 
 export default function Navbar() {
   const navigate = useNavigate();
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleLogout = () => {
@@ -48,9 +48,9 @@ export default function Navbar() {
 
           {/* User Menu */}
           <div className="hidden sm:flex sm:items-center sm:space-x-4">
-            {isAuthenticated ? (
+            {user ? (
               <>
-                {user?.role === 'ADMIN' && (
+                {user.role === 'ADMIN' && (
                   <Link
                     to="/admin"
                     className="text-gray-600 hover:text-indigo-600 px-3 py-2 text-sm font-medium transition-colors duration-200"
@@ -58,7 +58,7 @@ export default function Navbar() {
                     Admin Panel
                   </Link>
                 )}
-                {user?.role === 'MANAGER' && (
+                {user.role === 'MANAGER' && (
                   <Link
                     to="/yonetici"
                     className="text-gray-600 hover:text-indigo-600 px-3 py-2 text-sm font-medium transition-colors duration-200"
@@ -67,11 +67,18 @@ export default function Navbar() {
                   </Link>
                 )}
                 <Link
+                  to="/rezervasyonlarim"
+                  className="flex items-center text-gray-600 hover:text-indigo-600 px-3 py-2 text-sm font-medium transition-colors duration-200"
+                >
+                  <Calendar className="h-5 w-5 mr-2" />
+                  Rezervasyonlarım
+                </Link>
+                <Link
                   to="/profil"
                   className="flex items-center text-gray-600 hover:text-indigo-600 px-3 py-2 text-sm font-medium transition-colors duration-200"
                 >
                   <User className="h-5 w-5 mr-2" />
-                  {user?.firstName}
+                  {user.firstName}
                 </Link>
                 <button
                   onClick={handleLogout}
@@ -125,9 +132,9 @@ export default function Navbar() {
                 {item.name}
               </Link>
             ))}
-            {isAuthenticated ? (
+            {user ? (
               <>
-                {user?.role === 'ADMIN' && (
+                {user.role === 'ADMIN' && (
                   <Link
                     to="/admin"
                     className="block text-gray-600 hover:text-indigo-600 hover:bg-gray-50 px-3 py-2 text-base font-medium rounded-md transition-colors duration-200"
@@ -136,7 +143,7 @@ export default function Navbar() {
                     Admin Panel
                   </Link>
                 )}
-                {user?.role === 'MANAGER' && (
+                {user.role === 'MANAGER' && (
                   <Link
                     to="/yonetici"
                     className="block text-gray-600 hover:text-indigo-600 hover:bg-gray-50 px-3 py-2 text-base font-medium rounded-md transition-colors duration-200"
@@ -146,13 +153,23 @@ export default function Navbar() {
                   </Link>
                 )}
                 <Link
+                  to="/rezervasyonlarim"
+                  className="block text-gray-600 hover:text-indigo-600 hover:bg-gray-50 px-3 py-2 text-base font-medium rounded-md transition-colors duration-200"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <div className="flex items-center">
+                    <Calendar className="h-5 w-5 mr-2" />
+                    Rezervasyonlarım
+                  </div>
+                </Link>
+                <Link
                   to="/profil"
                   className="block text-gray-600 hover:text-indigo-600 hover:bg-gray-50 px-3 py-2 text-base font-medium rounded-md transition-colors duration-200"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   <div className="flex items-center">
                     <User className="h-5 w-5 mr-2" />
-                    {user?.firstName}
+                    {user.firstName}
                   </div>
                 </Link>
                 <button

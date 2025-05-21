@@ -263,7 +263,18 @@ export const getHotelById = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Hotel not found' });
     }
 
-    res.json(hotel);
+    // Add default features to the hotel data
+    const hotelWithFeatures = {
+      ...hotel,
+      features: [
+        { icon: 'Wifi', text: 'Ücretsiz Wi-Fi' },
+        { icon: 'Parking', text: 'Ücretsiz Otopark' },
+        { icon: 'Pool', text: 'Yüzme Havuzu' },
+        { icon: 'Restaurant', text: 'Restoran' },
+      ],
+    };
+
+    res.json(hotelWithFeatures);
   } catch (error) {
     console.error('Get hotel error:', error);
     res.status(500).json({ message: 'Error fetching hotel' });

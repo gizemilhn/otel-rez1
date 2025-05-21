@@ -4,7 +4,7 @@ export const UserRole = {
   MANAGER: 'MANAGER'
 } as const;
 
-export type UserRole = typeof UserRole[keyof typeof UserRole];
+export type UserRole = 'ADMIN' | 'MANAGER' | 'USER';
 
 export interface User {
   id: string;
