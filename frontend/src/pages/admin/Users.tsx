@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
 import api from '../../config/axios';
+import { toast } from 'react-hot-toast';
 
 interface User {
   id: string;
@@ -53,10 +54,22 @@ const Users = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const userData = {
+        ...formData,
+        // Only include password if it's not empty
+        ...(formData.password ? { password: formData.password } : {}),
+        // Convert empty strings to null for optional fields
+        phone: formData.phone || null,
+        birthDate: formData.birthDate || null,
+        tcNumber: formData.tcNumber || null,
+      };
+
+      console.log('Sending user data:', userData);
+
       if (selectedUser) {
-        await api.put(`/admin/users/${selectedUser.id}`, formData);
+        await api.put(`/admin/users/${selectedUser.id}`, userData);
       } else {
-        await api.post('/admin/users', formData);
+        await api.post('/admin/users', userData);
       }
       setIsModalOpen(false);
       setSelectedUser(null);
@@ -71,9 +84,11 @@ const Users = () => {
         tcNumber: '',
       });
       fetchUsers();
-    } catch (error) {
+      toast.success(selectedUser ? 'Kullanıcı güncellendi' : 'Kullanıcı oluşturuldu');
+    } catch (error: any) {
       console.error('Error saving user:', error);
-      setError('Failed to save user');
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Kullanıcı kaydedilemedi';
+      toast.error(errorMessage);
     }
   };
 

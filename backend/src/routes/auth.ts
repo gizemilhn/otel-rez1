@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { auth, rolKontrol } from '../middlewares/auth';
 import { validate } from '../middlewares/validation';
-import { musteriSchema } from '../middlewares/validation';
+import { userSchema } from '../middlewares/validation';
 import { kayit, giris } from '../controllers/auth';
 
 const router = Router();
@@ -12,7 +12,7 @@ router.get('/test', (req, res) => {
 });
 
 // Public routes
-router.post('/kayit', validate(musteriSchema), kayit);
+router.post('/kayit', validate(userSchema), kayit);
 router.post('/giris', giris);
 
 // Protected routes

@@ -30,29 +30,52 @@ export const createUser = async (req: Request, res: Response) => {
   try {
     const { email, password, firstName, lastName, role, phone, birthDate, tcNumber } = req.body;
 
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
+    console.log('Received user data:', { email, firstName, lastName, role, phone, birthDate, tcNumber });
+
+    // Validate required fields
+    if (!email || !password || !firstName || !lastName) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    // Validate role
+    if (role && !Object.values(UserRole).includes(role)) {
+      return res.status(400).json({ message: 'Invalid role' });
+    }
+
+    // Check if user with email already exists
+    const existingUserByEmail = await prisma.user.findUnique({
       where: { email },
     });
 
-    if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
+    if (existingUserByEmail) {
+      return res.status(400).json({ message: 'Bu e-posta adresi zaten kullanılıyor' });
+    }
+
+    // Check if user with TC number already exists (if provided)
+    if (tcNumber) {
+      const existingUserByTc = await prisma.user.findUnique({
+        where: { tcNumber },
+      });
+
+      if (existingUserByTc) {
+        return res.status(400).json({ message: 'Bu TC kimlik numarası zaten kullanılıyor' });
+      }
     }
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
+    // Create user with explicit type casting for role
     const user = await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
         firstName,
         lastName,
-        role: role || UserRole.USER,
-        phone,
+        role: (role || UserRole.USER) as UserRole,
+        phone: phone || null,
         birthDate: birthDate ? new Date(birthDate) : null,
-        tcNumber,
+        tcNumber: tcNumber || null,
       },
       select: {
         id: true,
@@ -68,10 +91,24 @@ export const createUser = async (req: Request, res: Response) => {
       },
     });
 
+    console.log('Created user:', user);
     res.status(201).json(user);
   } catch (error) {
-    console.error('Error creating user:', error);
-    res.status(500).json({ message: 'Error creating user' });
+    console.error('Detailed error creating user:', error);
+    
+    // Handle Prisma unique constraint errors
+    if (error.code === 'P2002') {
+      const field = error.meta?.target?.[0] || 'field';
+      return res.status(400).json({ 
+        message: `Bu ${field} zaten kullanılıyor`
+      });
+    }
+
+    // Handle other errors
+    res.status(500).json({ 
+      message: 'Kullanıcı oluşturulurken bir hata oluştu',
+      error: error instanceof Error ? error.message : 'Bilinmeyen hata'
+    });
   }
 };
 

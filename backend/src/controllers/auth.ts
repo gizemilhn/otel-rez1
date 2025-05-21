@@ -1,10 +1,15 @@
 import { Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, UserRole } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { AppError } from '../middlewares/errorHandler';
 
 const prisma = new PrismaClient();
+
+interface JwtPayload {
+  userId: string;
+  role: UserRole;
+}
 
 export const kayit = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -31,10 +36,11 @@ export const kayit = async (req: Request, res: Response, next: NextFunction) => 
       }
     });
 
+    const payload: JwtPayload = { userId: user.id, role: user.role };
     const token = jwt.sign(
-      { id: user.id, role: user.role },
+      payload,
       process.env.JWT_SECRET!,
-      { expiresIn: process.env.JWT_EXPIRES_IN }
+      { expiresIn: '24h' }
     );
 
     res.status(201).json({
@@ -71,10 +77,11 @@ export const giris = async (req: Request, res: Response, next: NextFunction) => 
       throw new AppError(401, 'Geçersiz e-posta veya şifre');
     }
 
+    const payload: JwtPayload = { userId: user.id, role: user.role };
     const token = jwt.sign(
-      { id: user.id, role: user.role },
+      payload,
       process.env.JWT_SECRET!,
-      { expiresIn: process.env.JWT_EXPIRES_IN }
+      { expiresIn: '24h' }
     );
 
     res.json({

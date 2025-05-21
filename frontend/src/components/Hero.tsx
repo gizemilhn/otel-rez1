@@ -1,5 +1,4 @@
 import React from 'react';
-import { Search } from 'lucide-react';
 
 export default function Hero() {
   return (
@@ -27,45 +26,6 @@ export default function Hero() {
           </p>
         </div>
 
-        {/* Search Bar */}
-        <div className="mt-12 max-w-3xl mx-auto">
-          <div className="bg-white rounded-lg shadow-lg p-4">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <label htmlFor="location" className="sr-only">
-                  Konum
-                </label>
-                <input
-                  type="text"
-                  name="location"
-                  id="location"
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                  placeholder="Nereye gitmek istiyorsunuz?"
-                />
-              </div>
-              <div className="flex-1">
-                <label htmlFor="dates" className="sr-only">
-                  Tarih
-                </label>
-                <input
-                  type="text"
-                  name="dates"
-                  id="dates"
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                  placeholder="Giriş - Çıkış Tarihi"
-                />
-              </div>
-              <button
-                type="submit"
-                className="inline-flex items-center justify-center rounded-md border border-transparent bg-primary-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors duration-200"
-              >
-                <Search className="h-5 w-5 mr-2" />
-                Otel Ara
-              </button>
-            </div>
-          </div>
-        </div>
-
         {/* Stats */}
         <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-3">
           <div className="text-center">
@@ -84,4 +44,4 @@ export default function Hero() {
       </div>
     </div>
   );
-} 
+}

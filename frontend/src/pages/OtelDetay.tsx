@@ -29,6 +29,7 @@ interface Hotel {
   imageUrl: string | null;
   features: Array<{ icon: string; text: string }>;
   rooms: Room[];
+  price: number;
 }
 
 const iconMap: { [key: string]: React.ElementType } = {
@@ -158,6 +159,11 @@ export default function OtelDetay() {
               ))}
             </div>
             <span className="ml-2 text-gray-600">{hotel.rating.toFixed(1)}</span>
+          </div>
+          <div className="mt-4">
+            <p className="text-2xl font-bold text-gray-900">
+              {hotel.price} TL <span className="text-base font-normal text-gray-500">/gece</span>
+            </p>
           </div>
           <p className="mt-4 text-gray-600">{hotel.description}</p>
           <div className="mt-6 grid grid-cols-2 gap-4">

@@ -54,11 +54,12 @@ model Hotel {
   description String?
   imageUrl    String?
   rating      Float?
-  managerId   String?       @unique
-  manager     User?         @relation("HotelManager", fields: [managerId], references: [id])
+  price       Float?       // Base price per night
+  managerId   String?      @unique
+  manager     User?        @relation("HotelManager", fields: [managerId], references: [id])
   rooms       Room[]
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   @@index([city])
   @@index([managerId])

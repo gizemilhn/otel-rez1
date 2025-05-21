@@ -263,9 +263,15 @@ export const getHotelById = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Hotel not found' });
     }
 
+    // Calculate base price from the lowest room price
+    const basePrice = hotel.rooms.length > 0 
+      ? Math.min(...hotel.rooms.map(room => room.price))
+      : null;
+
     // Add default features to the hotel data
     const hotelWithFeatures = {
       ...hotel,
+      price: basePrice,
       features: [
         { icon: 'Wifi', text: 'Ücretsiz Wi-Fi' },
         { icon: 'Parking', text: 'Ücretsiz Otopark' },

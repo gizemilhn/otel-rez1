@@ -1,5 +1,6 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import Layout from './components/Layout';
 import AdminLayout from './components/admin/AdminLayout';
 import YoneticiLayout from './components/YoneticiLayout';
@@ -27,52 +28,55 @@ import Rezervasyonlarim from './pages/Rezervasyonlarim';
 
 export default function App() {
   return (
-    <Routes>
-      {/* Public Routes */}
-      <Route path="/" element={<Layout />}>
-        <Route index element={<AnaSayfa />} />
-        <Route path="kayit" element={<Kayit />} />
-        <Route path="giris" element={<Giris />} />
-        <Route path="oteller" element={<Oteller />} />
-        <Route path="oteller/:id" element={<OtelDetay />} />
-        <Route path="hakkimizda" element={<Hakkimizda />} />
-        <Route path="iletisim" element={<Iletisim />} />
-        <Route path="gizlilik-politikasi" element={<GizlilikPolitikasi />} />
-        <Route path="profil" element={<Profil />} />
-        <Route path="rezervasyonlarim" element={<Rezervasyonlarim />} />
-      </Route>
+    <>
+      <Toaster position="top-right" />
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<Layout />}>
+          <Route index element={<AnaSayfa />} />
+          <Route path="kayit" element={<Kayit />} />
+          <Route path="giris" element={<Giris />} />
+          <Route path="oteller" element={<Oteller />} />
+          <Route path="oteller/:id" element={<OtelDetay />} />
+          <Route path="hakkimizda" element={<Hakkimizda />} />
+          <Route path="iletisim" element={<Iletisim />} />
+          <Route path="gizlilik-politikasi" element={<GizlilikPolitikasi />} />
+          <Route path="profil" element={<Profil />} />
+          <Route path="rezervasyonlarim" element={<Rezervasyonlarim />} />
+        </Route>
 
-      {/* Admin Routes */}
-      <Route
-        path="/admin"
-        element={
-          <ProtectedRoute requireAdmin>
-            <AdminLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<Dashboard />} />
-        <Route path="kullanicilar" element={<Users />} />
-        <Route path="oteller" element={<Hotels />} />
-        <Route path="odalar" element={<Rooms />} />
-        <Route path="rezervasyonlar" element={<AdminReservations />} />
-      </Route>
+        {/* Admin Routes */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute requireAdmin>
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Dashboard />} />
+          <Route path="kullanicilar" element={<Users />} />
+          <Route path="oteller" element={<Hotels />} />
+          <Route path="odalar" element={<Rooms />} />
+          <Route path="rezervasyonlar" element={<AdminReservations />} />
+        </Route>
 
-      {/* Hotel Manager Routes */}
-      <Route
-        path="/yonetici"
-        element={
-          <ProtectedRoute requireManager>
-            <YoneticiLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<YoneticiDashboard />} />
-        <Route path="otel" element={<Otel />} />
-        <Route path="odalar" element={<Odalar />} />
-        <Route path="rezervasyonlar" element={<Rezervasyonlar />} />
-        <Route path="ayarlar" element={<YoneticiAyarlar />} />
-      </Route>
-    </Routes>
+        {/* Hotel Manager Routes */}
+        <Route
+          path="/yonetici"
+          element={
+            <ProtectedRoute requireManager>
+              <YoneticiLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<YoneticiDashboard />} />
+          <Route path="otel" element={<Otel />} />
+          <Route path="odalar" element={<Odalar />} />
+          <Route path="rezervasyonlar" element={<Rezervasyonlar />} />
+          <Route path="ayarlar" element={<YoneticiAyarlar />} />
+        </Route>
+      </Routes>
+    </>
   );
 }
